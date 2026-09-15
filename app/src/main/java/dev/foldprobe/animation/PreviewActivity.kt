@@ -60,6 +60,7 @@ class PreviewActivity : ComponentActivity() {
     private var automatic by mutableStateOf(true)
     private var steadyTrial by mutableStateOf(false)
     private var shader by mutableStateOf(false)
+    private var coverPerspective by mutableStateOf(false)
     private var fullscreen by mutableStateOf(false)
     private lateinit var homeApps: HomeApps
     private var homeLoading: kotlinx.coroutines.Job? = null
@@ -89,6 +90,7 @@ class PreviewActivity : ComponentActivity() {
         coverTouchPolicy = CoverTouchPolicy(savedInstanceState?.getBoolean("coverTouchBlocked") ?: false)
         coverTouchBlocked = coverTouchPolicy.blocked
         automatic = preferences.getBoolean("automaticOverlap", true)
+        coverPerspective = preferences.getBoolean("coverPerspective", false)
         val legacySteady = getSharedPreferences("animation.PreviewActivity", MODE_PRIVATE)
             .getBoolean("steadyDisplay", false)
         steadyTrial = preferences.getBoolean("steadyDisplay", legacySteady)
@@ -213,6 +215,7 @@ class PreviewActivity : ComponentActivity() {
             val sceneReading = if (homeSurface && reading.mode == PreviewMode.DIAGNOSTIC && !reading.diagnostic.live)
                 reading.copy(progress = if (compact) 0f else 1f) else reading
             DuoHome(sceneReading, outer = compact, useShader = shader, modifier = Modifier.fillMaxSize(),
+                coverPerspective = coverPerspective,
                 home = home, enabled = !navigationBusy && (!compact || !coverTouchBlocked), onOpen = ::openSlot, onEdit = ::editSlot,
                 onViewport = { w, h, v -> recordProjection("primary", w, h, v) },
                 onShaderStatus = { reportShader("primary", it) })
@@ -251,6 +254,7 @@ class PreviewActivity : ComponentActivity() {
                         val panel = if (outer) "outer" else "secondaryInner"
                         Box(Modifier.fillMaxSize()) {
                             DuoHome(reading, outer = outer, useShader = shader, modifier = Modifier.fillMaxSize(),
+                                coverPerspective = coverPerspective,
                                 home = home, enabled = !navigationBusy && !outer, onOpen = ::openSlot, onEdit = ::editSlot,
                                 onViewport = { w, h, v -> recordProjection(panel, w, h, v) },
                                 onShaderStatus = { reportShader(panel, it) })
@@ -302,6 +306,18 @@ class PreviewActivity : ComponentActivity() {
             }
             Text("Det här är det enda läget du behöver. Skärmarna följer öppning och stängning. " +
                 "Utskärmen visar animationen utan att reagera på fingrarna under vikningen.")
+            if (Build.VERSION.SDK_INT >= 33) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(checked = coverPerspective, onCheckedChange = { selected ->
+                        coverPerspective = selected
+                        preferences.edit().putBoolean("coverPerspective", selected).apply()
+                        app.log.record("preview", "coverPerspective", mapOf("enabled" to selected))
+                    })
+                    Text("Perspektiv på utskärmen", modifier = Modifier.padding(start = 12.dp))
+                }
+                Text("Testläge: bilden ändrar perspektiv medan du viker. Stäng av för att jämföra med enbart oskärpa.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
             Text(if (automatic) "Automatiken fortsätter när du går tillbaka till hemskärmen."
                 else "Automatiken är avstängd. Du kan fortfarande öppna dina appar.",
                 color = Color(0xFFB7D4D6))
@@ -420,6 +436,7 @@ class PreviewActivity : ComponentActivity() {
                         "progress" to reading.progress, "angle" to reading.displayedAngle))
                 }
                 DuoHome(reading, outer = compact, useShader = shader, modifier = Modifier.fillMaxSize(),
+                    coverPerspective = coverPerspective,
                     home = home, enabled = !navigationBusy && (!compact || !coverTouchBlocked), onOpen = ::openSlot, onEdit = ::editSlot,
                     onShaderStatus = { reportShader("primary", it) })
             }

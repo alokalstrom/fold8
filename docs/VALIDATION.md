@@ -31,4 +31,10 @@ Two hypotheses were not applied: [ROLE_HOME is documented since API 29](https://
 
 ## 0.18.1 entry correction checks
 
-The merged debug manifest retains an exported Home alias and a private PreviewActivity. Both cold and warm public entries sanitize launch extras in source. The phone is currently disconnected, so physical launch checks of 0.18.1 remain pending; the previously user-tested installation is 0.18.0. The correction does not alter animation or display policy.
+The merged debug manifest retains an exported Home alias and a private PreviewActivity. Both cold and warm public entries sanitize launch extras in source. Version 0.18.1 was subsequently installed: cold and warm Home entry succeeded, and the user confirmed the requested opening, closing, cover touch blocking, app launch and return Home cycle. Hostile-extra checks have not been physically verified. The correction does not alter animation or display policy.
+
+## 0.19.0 perspective experiment
+
+Issue #3 tracks an optional inverse projection applied to cover sampling coordinates in both complementary sharp/blur branches. It uses the same measured progress as the sweep. The hinge-side edge is fixed, horizontal sampling is compressed and vertical scale varies across the surface; all source samples stay inside the cover scene. Identity is retained at 0–5° and 165–180°, and on the entire inner scene. The bounded curve avoids an inverse-cosine singularity at 90°. These angles and strengths are experimental choices, not measured Apple parameters.
+
+The control starts disabled and persists its value. The pre-existing effect remains the fallback below Android 13 or when runtime shader construction fails. Numerical checks cover no holes/foldover, hinge alignment, resting identity and pause/reversal continuity. They do not establish physical perceptual alignment, GPU sampling quality or performance. Device comparison remains required before choosing a new default. The existing panel control and app navigation policy are unchanged. Review/build/device results are recorded in issue #3 and its linked PR.

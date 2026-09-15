@@ -2,7 +2,9 @@
 
 An experimental Android home screen for a physical Samsung Galaxy Z Fold 8. The app uses measured hinge movement to keep the cover and inner scenes visually connected while the phone opens or closes.
 
-The current source is **0.18.1-entry**, which hardens external activity entry on top of the user-tested **0.18.0-sweep** prototype. Its app grid stays on the right; local date and calendar cards appear on the left. Separate spatial blur masks soften the outgoing cover and reveal the incoming inner surface. User app selections persist. Cover touch is blocked while folding.
+The current source is **0.19.0-perspective**, adding an optional cover perspective experiment to the user-tested **0.18.1-entry** prototype. Its app grid stays on the right; local date and calendar cards appear on the left. Separate spatial blur masks soften the outgoing cover and reveal the incoming inner surface. User app selections persist. Cover touch is blocked while folding.
+
+On Android 13+, Controls → **Perspektiv på utskärmen** enables a bounded cover-only perspective adjustment. It starts disabled, persists your selection, and leaves the inner scene unchanged. Disable it to compare with the previous blur-only effect. This is a partial visual compensation experiment, not a measured reproduction of Apple's projection or a viewer-tracked transparent display. The rightmost cover content can move out of view during the experiment; closed geometry is unchanged.
 
 This targets one tested Samsung model and firmware behavior. It uses non-root Shizuku access to a Samsung diagnostic angle getter and undocumented display-state requests. It is not a general-purpose launcher release or a claim of exact iOS animation fidelity.
 

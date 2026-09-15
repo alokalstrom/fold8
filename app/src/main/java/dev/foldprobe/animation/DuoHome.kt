@@ -34,7 +34,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun DuoHome(reading: VisualReading, outer: Boolean, useShader: Boolean, modifier: Modifier = Modifier,
-    home: HomeAppsState = HomeAppsState(), enabled: Boolean = true,
+    home: HomeAppsState = HomeAppsState(), enabled: Boolean = true, coverPerspective: Boolean = false,
     onOpen: (Int) -> Unit = {}, onEdit: (Int) -> Unit = {},
     onViewport: (Float, Float, SceneViewport) -> Unit = { _, _, _ -> },
     onShaderStatus: (Throwable?) -> Unit = {}) {
@@ -63,7 +63,7 @@ fun DuoHome(reading: VisualReading, outer: Boolean, useShader: Boolean, modifier
         Layout(content = {
             CompositionLocalProvider(LocalDensity provides Density(viewport.scale, fontScale = 1f),
                 LocalViewConfiguration provides sceneConfiguration) {
-                SharedScene(reading.progress, outer, shader, sweep, home, enabled, onOpen, onEdit)
+                SharedScene(reading.progress, outer, shader, sweep, home, enabled, coverPerspective, onOpen, onEdit)
             }
         }) { measurables, constraints ->
             val scene = measurables.single().measure(Constraints.fixed(
@@ -79,6 +79,7 @@ fun DuoHome(reading: VisualReading, outer: Boolean, useShader: Boolean, modifier
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun SharedScene(progress: Float, outer: Boolean, shader: DuoShader?, sweep: RevealSweepShader?, home: HomeAppsState, enabled: Boolean,
+    coverPerspective: Boolean,
     onOpen: (Int) -> Unit, onEdit: (Int) -> Unit) {
     val p = DuoLayout.bounded(progress)
     val density = LocalDensity.current
@@ -95,7 +96,8 @@ private fun SharedScene(progress: Float, outer: Boolean, shader: DuoShader?, swe
     // Keep the validated uniform treatment as a fallback when runtime shaders are unavailable.
     Box(Modifier.fillMaxSize().then(if (outer && sweep == null) Modifier.foldReveal(.75f, p, true) else Modifier)
         .graphicsLayer {
-            if (Build.VERSION.SDK_INT >= 33 && sweep != null) renderEffect = sweep.effect(size.width, p, outer)
+            if (Build.VERSION.SDK_INT >= 33 && sweep != null)
+                renderEffect = sweep.effect(size.width, size.height, p, outer, coverPerspective)
         }.graphicsLayer {
         if (Build.VERSION.SDK_INT >= 33 && shader != null) renderEffect = shader.effect(size.width, size.height, p)
     }.background(Brush.radialGradient(listOf(Color(0xFF326C72), Color(0xFF192F42), Color(0xFF101823)),
