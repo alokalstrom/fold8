@@ -27,8 +27,8 @@ class CoverPerspectiveTest {
                 for (column in 0..40) {
                     val (x, y) = projection.sample(column / 40f, v)
                     assertTrue(x.isFinite() && y.isFinite())
-                    assertTrue(x in 0f..1.03f && y in -.12f..1.12f)
-                    // The finite image extends edge pixels for rays outside its bounds.
+                    assertTrue(x in 0f..1.03f && y in -.23f..1f)
+                    // Above-image rays form the black wedge; remaining source coordinates clamp.
                     assertTrue(x.coerceIn(0f, 1f).isFinite() && y.coerceIn(0f, 1f).isFinite())
                     assertTrue(x > lastX)
                     lastX = x
@@ -56,7 +56,7 @@ class CoverPerspectiveTest {
     @Test fun samplerMatchesIndependentRayPlaneIntersectionAtComparisonAngles() {
         val width = DuoLayout.COVER_WIDTH.toDouble()
         val height = DuoLayout.HEIGHT.toDouble()
-        val eye = doubleArrayOf(width / 2, height / 2, CoverPerspective.VIEW_DISTANCE.toDouble())
+        val eye = doubleArrayOf(width / 2, height, CoverPerspective.VIEW_DISTANCE.toDouble())
         for (angle in listOf(30, 45, 60)) {
             val radians = Math.toRadians(angle.toDouble())
             val projection = CoverPerspective.projection(angle / 180f, true, true)
@@ -69,12 +69,35 @@ class CoverPerspectiveTest {
                 val sample = projection.sample(u, v)
                 assertEquals((hit[0] / width).toFloat(), sample.first, .00001f)
                 assertEquals((hit[1] / height).toFloat(), sample.second, .00001f)
-                // An upper horizontal source line must approach the center on the near edge,
-                // opposing (not reinforcing) the physical panel's perspective enlargement.
-                val drawnTop = .5f + (.1f - .5f) * (1f + projection.skew * u)
-                assertTrue(drawnTop >= .1f - .00001f)
             }
             assertTrue(projection.skew < 0f)
+        }
+    }
+
+    @Test fun upperAndLowerRowsBothSlopeDownAndRevealATopWedge() {
+        for (angle in listOf(15, 30, 45, 60, 90, 120, 150)) {
+            val projection = CoverPerspective.projection(angle / 180f, true, true)
+            for (sourceRow in listOf(.1f, .3f, .7f, .9f)) {
+                val samples = (0..20).map { column ->
+                    val u = column / 20f
+                    // Solve the inverse sampler for the drawn position of this source row.
+                    var lo = 0f; var hi = 1f
+                    repeat(24) {
+                        val mid = (lo + hi) / 2f
+                        if (projection.sample(u, mid).second < sourceRow) lo = mid else hi = mid
+                    }
+                    (lo + hi) / 2f
+                }
+                samples.zipWithNext().forEach { (left, right) -> assertTrue(right > left) }
+                assertEquals(sourceRow, samples.first(), .00001f)
+            }
+            for (u in listOf(.25f, .5f, .75f, 1f)) {
+                val topEdge = -projection.skew * u
+                assertEquals(0f, projection.sample(u, topEdge).second, .00001f)
+                assertTrue(projection.sample(u, topEdge - .001f).second < 0f)
+                assertTrue(projection.sample(u, topEdge + .001f).second > 0f)
+                assertEquals(1f, projection.sample(u, 1f).second, 0f)
+            }
         }
     }
 
