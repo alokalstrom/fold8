@@ -1,0 +1,54 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Declaration is an experiment, not a claim that Samsung grants it. -->
+    <uses-permission android:name="com.samsung.permission.SSENSOR" />
+    <!-- Loopback-only, authenticated USB diagnostic bridge. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-feature android:name="android.hardware.sensor.hinge_angle" android:required="false" />
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="com.samsung.android.goodlock" />
+        <package android:name="com.samsung.android.app.homestar" />
+        <package android:name="com.samsung.android.multistar" />
+        <package android:name="com.samsung.android.sidegesturepad" />
+        <package android:name="com.samsung.android.app.launcher" />
+        <package android:name="com.sec.android.app.launcher" />
+        <package android:name="com.android.systemui" />
+        <package android:name="com.samsung.systemui.lockstar" />
+        <package android:name="com.samsung.android.wonderland.wallpaper" />
+    </queries>
+    <application android:name=".ProbeApplication" android:label="Fold Study" android:icon="@drawable/ic_fold" android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:supportsRtl="true">
+        <provider android:name="rikka.shizuku.ShizukuProvider" android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false" android:enabled="true" android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+        <activity android:name=".MainActivity" android:label="Fold Probe" android:exported="true" android:resizeableActivity="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|uiMode|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".display.DisplayProbeActivity" android:exported="false" android:resizeableActivity="true" />
+        <activity android:name=".animation.PreviewActivity" android:exported="false" android:resizeableActivity="true"
+            android:launchMode="singleTask" android:taskAffinity="dev.foldprobe.home" android:excludeFromRecents="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|uiMode|keyboardHidden" />
+        <activity-alias android:name=".FoldStudy" android:targetActivity=".animation.PreviewActivity"
+            android:label="Fold Study" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.logs" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/log_paths" />
+        </provider>
+    </application>
+</manifest>
