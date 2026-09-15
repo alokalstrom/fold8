@@ -57,13 +57,14 @@ class RevealSweepShader {
             uniform float soft;
             half4 main(float2 point) {
                 float2 samplePoint = point;
-                if (projection.x > 0.0 || projection.y > 0.0) {
+                if (projection.x != 0.0 || projection.y != 0.0) {
                     float span = 1.0 - innerEdge;
                     float u = clamp((point.x / width - innerEdge) / span, 0.0, 1.0);
                     float denominator = 1.0 + projection.y * u;
                     samplePoint.x = width * (innerEdge + span * u * (1.0 - projection.x) / denominator);
                     samplePoint.y = height * (0.5 + (point.y / height - 0.5) / denominator);
-                    // Keep filtering inside the recorded layer at its top/bottom edges.
+                    // Rays beyond the finite image extend its edge pixels, never transparent gaps.
+                    // Most exposed top/bottom source edges contain only wallpaper.
                     samplePoint = clamp(samplePoint, float2(0.5), float2(width, height) - 0.5);
                 }
                 float x = samplePoint.x / width;
