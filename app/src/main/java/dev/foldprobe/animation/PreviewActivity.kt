@@ -58,7 +58,9 @@ class PreviewActivity : ComponentActivity() {
     private var foregroundHeartbeat: kotlinx.coroutines.Job? = null
     private var automaticCyclePrepared = false
     private var automatic by mutableStateOf(true)
-    private var steadyTrial by mutableStateOf(false)
+    // Normal automation always retains the validated foreground display lease.
+    // Old preferences/debug extras must not silently restore endpoint remapping.
+    private val steadyTrial = true
     private var shader by mutableStateOf(false)
     private var coverPerspective by mutableStateOf(false)
     private var fullscreen by mutableStateOf(false)
@@ -91,11 +93,6 @@ class PreviewActivity : ComponentActivity() {
         coverTouchBlocked = coverTouchPolicy.blocked
         automatic = preferences.getBoolean("automaticOverlap", true)
         coverPerspective = preferences.getBoolean("coverPerspective", false)
-        val legacySteady = getSharedPreferences("animation.PreviewActivity", MODE_PRIVATE)
-            .getBoolean("steadyDisplay", false)
-        steadyTrial = preferences.getBoolean("steadyDisplay", legacySteady)
-        applySteadyIntent(intent)
-        preferences.edit().putBoolean("steadyDisplay", steadyTrial).apply()
         shader = savedInstanceState?.getBoolean("shader") ?: intent.getBooleanExtra("shader", false)
         fullscreen = savedInstanceState?.getBoolean("fullscreen") ?: intent.getBooleanExtra("fullscreen", true)
         val mode = savedInstanceState?.getString("mode") ?: intent.getStringExtra("mode")
@@ -138,7 +135,6 @@ class PreviewActivity : ComponentActivity() {
         val entry = sanitizedEntry(newIntent)
         super.onNewIntent(entry)
         setIntent(entry)
-        applySteadyIntent(entry)
         homeEntry = entry.hasCategory(Intent.CATEGORY_HOME)
         refreshHomeRole()
         if (homeEntry || entry.hasCategory(Intent.CATEGORY_LAUNCHER)) {
@@ -157,13 +153,6 @@ class PreviewActivity : ComponentActivity() {
         val privateTarget = value.component?.packageName == packageName &&
             value.component?.className == PreviewActivity::class.java.name
         return if (privateTarget) value else Intent(value).replaceExtras(null as Bundle?)
-    }
-    private fun applySteadyIntent(value: Intent) {
-        if (!value.hasExtra("steadyTrial")) return
-        val selected = value.getBooleanExtra("steadyTrial", false)
-        if (selected != steadyTrial) automaticCyclePrepared = false
-        steadyTrial = selected
-        preferences.edit().putBoolean("steadyDisplay", selected).apply()
     }
     private fun refreshHomeRole() {
         defaultHome = getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_HOME)
@@ -290,15 +279,8 @@ class PreviewActivity : ComponentActivity() {
             .windowInsetsPadding(WindowInsets.systemBars).verticalScroll(rememberScrollState()).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Text("Fold Study", style = MaterialTheme.typography.headlineMedium)
-            if (steadyTrial) {
-                Text("Vikläget fortsätter medan hemskärmen är aktiv. Utskärmen visas svart helt öppen. " +
-                    "Appstart och återgång till Hem kan fortfarande ge ett kort blink.")
-                OutlinedButton(onClick = {
-                    steadyTrial = false; intent.removeExtra("steadyTrial")
-                    preferences.edit().putBoolean("steadyDisplay", false).apply()
-                    automaticCyclePrepared = false; diagnostic.earlyDisplay(false)
-                }) { Text("Avsluta försöket") }
-            }
+            Text("Automatisk vikning behåller skärmläget medan hemskärmen är aktiv. " +
+                "Utskärmen visas svart helt öppen. Appstart kan fortfarande ge ett kort blink.")
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Switch(checked = automatic, onCheckedChange = ::changeAutomatic)
                 Text("Automatisk vikning", style = MaterialTheme.typography.titleMedium,

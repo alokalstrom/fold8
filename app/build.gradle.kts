@@ -9,8 +9,8 @@ android {
         applicationId = "dev.foldprobe"
         minSdk = 30
         targetSdk = 36
-        versionCode = 37
-        versionName = "0.21.0-anchor"
+        versionCode = 38
+        versionName = "0.21.1-steady"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { buildConfig = true; compose = true; aidl = true }
